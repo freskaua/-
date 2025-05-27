@@ -1,19 +1,74 @@
+
 <!DOCTYPE html>
 <html lang="uk">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Опитувальник</title>
-    <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Опитувальник</title>
+  <style>
+    body { font-family: Arial, sans-serif; max-width: 800px; margin: auto; padding: 20px; }
+    h2 { color: #2c3e50; }
+    .block { margin-bottom: 20px; padding: 10px; border: 1px solid #ddd; border-radius: 8px; }
+    .question { margin-bottom: 5px; }
+    button { padding: 10px 20px; margin-top: 20px; font-size: 16px; }
+  </style>
 </head>
 <body>
-    <div class="container">
-        <h1>Опитувальник</h1>
-        <form id="quiz-form"></form>
-        <button id="submit-btn">Надіслати</button>
-        <canvas id="result-chart" width="400" height="400"></canvas>
-    </div>
-    <script src="chart.umd.js"></script>
-    <script src="script.js"></script>
+  <h1>Опитувальник (10 блоків)</h1>
+  <form id="quizForm">
+    <div id="blocks"></div>
+    <button type="submit">Надіслати</button>
+  </form>
+
+  <script>
+    const blocks = [];
+    for (let b = 1; b <= 10; b++) {
+      let questions = [];
+      for (let q = 1; q <= 8; q++) {
+        questions.push(`Питання ${q} для блоку ${b}`);
+      }
+      blocks.push({ title: `Блок ${b}`, questions });
+    }
+
+    const container = document.getElementById("blocks");
+    blocks.forEach((block, index) => {
+      const blockDiv = document.createElement("div");
+      blockDiv.className = "block";
+      blockDiv.innerHTML = `<h2>${block.title}</h2>`;
+      block.questions.forEach((q, qi) => {
+        const qid = `b${index + 1}_q${qi + 1}`;
+        blockDiv.innerHTML += `
+          <div class="question">
+            <label>${q}</label><br/>
+            <label><input type="radio" name="${qid}" value="1" required /> Так</label>
+            <label><input type="radio" name="${qid}" value="0" /> Ні</label>
+          </div>`;
+      });
+      container.appendChild(blockDiv);
+    });
+
+    const scriptURL = 'YOUR_GOOGLE_SCRIPT_URL'; // СЮДИ ВСТАВИШ СВІЙ URL
+
+    document.getElementById("quizForm").addEventListener("submit", function(e) {
+      e.preventDefault();
+      const formData = new FormData(e.target);
+      const blockResults = {};
+      for (let b = 1; b <= 10; b++) {
+        let sum = 0;
+        for (let q = 1; q <= 8; q++) {
+          const val = formData.get(`b${b}_q${q}`);
+          sum += val ? parseInt(val) : 0;
+        }
+        blockResults[`block${b}`] = sum;
+      }
+
+      fetch(scriptURL, {
+        method: 'POST',
+        body: JSON.stringify(blockResults)
+      })
+      .then(response => alert("Дякуємо! Результати надіслані."))
+      .catch(error => alert("Помилка при надсиланні."));
+    });
+  </script>
 </body>
 </html>
